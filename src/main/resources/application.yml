@@ -3,7 +3,7 @@ server:
   http2:
     enabled: true
   servlet:
-    context-path: /api
+    context-path: /api/v1
   
 
 db:
