@@ -16,6 +16,16 @@ spring:
   application:
     name: mobile-numbers
         
+  jpa:
+    database: MYSQL
+    database-platform: org.hibernate.dialect.MySQLDialect
+    show-sql: true
+    
+  datasource:
+    username: root
+    password: root159*
+    jdbcUrl: jdbc:mysql://localhost:3306/vdf-mobile-numbers?useSSL=false
+    driver-class-name: com.mysql.cj.jdbc.Driver
   security:
     user:
       name: spring-user-test
