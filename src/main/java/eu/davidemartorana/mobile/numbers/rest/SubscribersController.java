@@ -25,7 +25,7 @@ import eu.davidemartorana.mobile.numbers.rest.dto.Subscriber;
  */
 @RestController
 @RequestMapping("/subscribers")
-public class SubscriberController {
+public class SubscribersController {
 
 	
 	@GetMapping(path= {"","/"})
