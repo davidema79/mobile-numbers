@@ -15,6 +15,8 @@ db:
 spring:
   application:
     name: mobile-numbers
-    
-
-  
+        
+  security:
+    user:
+      name: spring-user-test
+      password: u53r*T3st
