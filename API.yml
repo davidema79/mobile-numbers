@@ -1,6 +1,6 @@
 openapi: 3.0.0
 info:
-  title: Mobile Number Subscribers API
+  title: Mobile Number API
   description: ""
   version: 1.0.0
 servers:
@@ -8,37 +8,67 @@ servers:
     description: Temporary host at version 1
 
 paths:
-  /subscribers:
+  /mobile-numbers:
     get:
-      summary: Returns a list of subscribers.
-      description: List of subscribers in the database.
+      summary: Returns a list of subscribed mobile numbers.
+      description: Returns a list of mobile number subscriptions contained in the database.
       responses:
         200:
-          description: A JSON array of user names
+          description: A JSON array of mobile number subscriptions
           content:
             application/json:
               schema: 
                 type: array
                 items:
-                  $ref: '#/components/schemas/Subscriber'
+                  $ref: '#/components/schemas/MobileNumber'
         default:
           description: Common Unexpected Errors
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorMessage'
-                
-  /subscribers/{id}:
+    post:
+      summary: Add a new mobile number subscription
+      description: "Add a new Subscriber with unique number mobile"
+      requestBody:
+        content:
+          application/json:
+            schema:
+                $ref: '#/components/schemas/MobileNumber'
+              
+      responses:
+        201:
+          description: Mobile number subscription
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MobileNumber'
+        
+        400:
+          $ref: '#/components/responses/BadRequest'
+
+        401:
+          $ref: '#/components/responses/Unauthorized'
+        
+        default:
+          description: Common Unexpected Errors
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+
+            
+  /mobile-numbers/{id}:
     parameters:
     - name: id
       in: path
-      description: "ID of subscriber to return"
+      description: "ID of mobile number subscription to return"
       required: true
       schema:
         type: integer
         format: int64
     get:
-      summary: Returns Subscriber Details
+      summary: Returns mobile number subscription
       description: "Subscriber by ID"
       responses:
         200:
@@ -46,7 +76,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Subscriber'
+                $ref: '#/components/schemas/MobileNumber'
         
         400:
           $ref: '#/components/responses/BadRequest'
@@ -63,21 +93,16 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorMessage'
+                
     delete:
-      summary: Returns Subscriber Details
-      description: "Subscriber by ID"
+      summary: Delete a mobile number subscription
+      description: "Delte mobile number subscription by the given ID"
       responses:
         204:
           description: Subscriber Deleted Correctly
-        
-        400:
-          $ref: '#/components/responses/BadRequest'
 
         401:
           $ref: '#/components/responses/Unauthorized'
-          
-        404:
-          $ref: '#/components/responses/NotFound'
         
         default:
           description: Common Unexpected Errors
@@ -86,15 +111,15 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorMessage'
     patch:
-      summary: Patch Subscriber Details
-      description: "Patch Subscriber details by its ID"
+      summary: Patch mobile number subscription details
+      description: "Patch mobile number subscription details by its ID"
       responses:
         200:
           description: Subscriber Details
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Subscriber'
+                $ref: '#/components/schemas/MobileNumber'
         
         400:
           $ref: '#/components/responses/BadRequest'
@@ -114,7 +139,7 @@ paths:
 
 components:
   schemas:
-    Subscriber:
+    MobileNumber:
       type: object
       properties:
         id:
@@ -130,6 +155,9 @@ components:
         ownerId:
           type: integer
           format: int64
+        serviceType:
+          type: string
+          enum: ["Prepaid", "Postpaied"]
         subscribtionDate:
           type: string
           format: date-time

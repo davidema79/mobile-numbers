@@ -9,11 +9,13 @@ import org.springframework.boot.orm.jpa.EntityManagerFactoryBuilder;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
+import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.springframework.orm.jpa.JpaTransactionManager;
 import org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean;
 import org.springframework.transaction.PlatformTransactionManager;
 
-import eu.davidemartorana.mobile.numbers.source.domain.Subscriber;
+import eu.davidemartorana.mobile.numbers.source.domain.MobileSubscription;
+import eu.davidemartorana.mobile.numbers.source.repositories.MobileSubscriptionsRepository;
 
 /**
  * Configurations regarding data sources
@@ -22,6 +24,7 @@ import eu.davidemartorana.mobile.numbers.source.domain.Subscriber;
  *
  */
 @Configuration
+@EnableJpaRepositories(basePackageClasses = { MobileSubscriptionsRepository.class})
 public class DataSourceConfig {
 
 	/*
@@ -42,7 +45,7 @@ public class DataSourceConfig {
 	public LocalContainerEntityManagerFactoryBean entityManagerFactory(final EntityManagerFactoryBuilder builder, final DataSource dataSource) {
 		return builder
 				.dataSource(dataSource)
-				.packages(Subscriber.class)
+				.packages(MobileSubscription.class)
 				.build();
 	}
 
