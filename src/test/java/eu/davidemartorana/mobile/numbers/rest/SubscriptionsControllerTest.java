@@ -3,30 +3,30 @@ package eu.davidemartorana.mobile.numbers.rest;
 import static org.hamcrest.CoreMatchers.hasItems;
 import static org.hamcrest.CoreMatchers.notNullValue;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.assertj.core.util.Lists;
 import org.hamcrest.collection.IsCollectionWithSize;
 import org.hamcrest.collection.IsEmptyCollection;
 import org.hamcrest.core.IsCollectionContaining;
 import org.hamcrest.core.IsEqual;
+import org.hamcrest.text.StringContainsInOrder;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase.Replace;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
-import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
-import org.springframework.test.context.junit4.SpringRunner;
 
 import eu.davidemartorana.mobile.numbers.config.DataSourceConfig;
 import eu.davidemartorana.mobile.numbers.domain.ServiceType;
@@ -34,7 +34,6 @@ import eu.davidemartorana.mobile.numbers.rest.dto.Subscription;
 import eu.davidemartorana.mobile.numbers.services.SubscriptionConverter;
 import eu.davidemartorana.mobile.numbers.services.SubscriptionsService;
 import eu.davidemartorana.mobile.numbers.source.domain.MobileSubscription;
-import eu.davidemartorana.mobile.numbers.source.repositories.MobileSubscriptionsRepository;
 
 /**
  * Tests
@@ -70,6 +69,8 @@ public class SubscriptionsControllerTest {
 	private TestEntityManager testEntityManager;
 
 	private final List<MobileSubscription> mobileSubscriptinList = new ArrayList<>();
+	private final List<Long> mobileSubscriptinIdList = new ArrayList<>();
+
 
 	@Before
 	public void populateDataBase() {
@@ -79,10 +80,10 @@ public class SubscriptionsControllerTest {
 		mobileSubscriptinList.add(new MobileSubscription("35677986003", 4l, 5l, ServiceType.MOBILE_POSTPAID));
 		mobileSubscriptinList.add(new MobileSubscription("35677986004", 10l, 10l, ServiceType.MOBILE_PREPAID));
 
-		this.testEntityManager.persist(mobileSubscriptinList.get(0));
-		this.testEntityManager.persist(mobileSubscriptinList.get(1));
-		this.testEntityManager.persist(mobileSubscriptinList.get(2));
-		this.testEntityManager.persist(mobileSubscriptinList.get(3));
+		mobileSubscriptinIdList.add((Long) this.testEntityManager.persistAndGetId(mobileSubscriptinList.get(0)));
+		mobileSubscriptinIdList.add((Long) this.testEntityManager.persistAndGetId(mobileSubscriptinList.get(1)));
+		mobileSubscriptinIdList.add((Long) this.testEntityManager.persistAndGetId(mobileSubscriptinList.get(2)));
+		mobileSubscriptinIdList.add((Long) this.testEntityManager.persistAndGetId(mobileSubscriptinList.get(3)));
 		//this.testEntityManager.flush();
 	}
 	
@@ -92,7 +93,7 @@ public class SubscriptionsControllerTest {
 	}
 
 	@Test
-	public void getSubscriberTest() {
+	public void getSubscribersTest() {
 		final List<Subscription> allList = this.controller.getSubscribers(null, null);
 
 		Assert.assertThat(allList, notNullValue());
@@ -129,16 +130,66 @@ public class SubscriptionsControllerTest {
 
 	@Test
 	public void addSubscriberTest() {
-		final Subscription subscription = this.controller.addSubscriber(new Subscription().setMobileNumber("356789654")
-				.setOwnerId(20l).setUserId(21l).setServiceType(ServiceType.MOBILE_POSTPAID.toLabelService()));
+		final String mobileNumber = "356789654";
+		final LocalDateTime before = LocalDateTime.now();
+		
+		final Subscription subscriptionToAdd = new Subscription()
+				.setMobileNumber(mobileNumber)
+				.setOwnerId(20l).setUserId(21l)
+				.setServiceType(ServiceType.MOBILE_POSTPAID.toLabelService());
+		
+		final Subscription subscriptionResult = this.controller.addSubscriber(subscriptionToAdd);
 
-		Assert.assertNotNull(subscription);
+		Assert.assertNotNull(subscriptionResult);
+		
+		Assert.assertThat(subscriptionResult.getMobileNumber(), IsEqual.equalTo(mobileNumber));
+		Assert.assertThat(subscriptionResult.getOwnerId(), IsEqual.equalTo(20l));
+		Assert.assertThat(subscriptionResult.getUserId(), IsEqual.equalTo(21l));
+		Assert.assertThat(subscriptionResult.getServiceType(), IsEqual.equalTo(ServiceType.MOBILE_POSTPAID.toLabelService()));
+		
+		final LocalDateTime after = LocalDateTime.now();
+		Assert.assertTrue(subscriptionResult.getSubscribtionDate().isAfter(before));
+		Assert.assertTrue(subscriptionResult.getSubscribtionDate().isBefore(after));
 	}
+
+	@Test(expected=IllegalArgumentException.class)
+	public void addSubscriptionExist() {
+		final String mobileNumber = "356789654";
+		
+		final Subscription subscriptionToAdd = new Subscription()
+				.setMobileNumber(mobileNumber)
+				.setOwnerId(20l).setUserId(21l)
+				.setServiceType(ServiceType.MOBILE_POSTPAID.toLabelService());
+		
+		final Subscription subscriptionResult = this.controller.addSubscriber(subscriptionToAdd);
+
+		Assert.assertNotNull(subscriptionResult);
+	
+		try {
+			this.controller.addSubscriber(subscriptionToAdd);
+		} catch(final IllegalArgumentException e) {
+			Assert.assertThat(e.getMessage(),StringContainsInOrder.stringContainsInOrder(Lists.list("Number", "Exists", mobileNumber)));
+			throw e;
+		}
+	
+	}
+	
 
 	@Test
 	public void deleteSubscriberTest() {
-		this.controller.deleteSubscriber(4l);
-		this.controller.deleteSubscriber(5l); //It does not exist, but no exception is thrown.
+		final Long  id = mobileSubscriptinIdList.get(3);
+		final MobileSubscription subscription = this.testEntityManager.find(MobileSubscription.class, id);
+		
+		Assert.assertNotNull(subscription);
+		
+		this.controller.deleteSubscriber(id);
+		this.controller.deleteSubscriber(123456l); //It does not exist, but no exception is thrown.
+		
+		
+		final MobileSubscription  subscription2 = this.testEntityManager.find(MobileSubscription.class, id);
+		
+
+		Assert.assertNull(subscription2);
 	}
 
 	@Test

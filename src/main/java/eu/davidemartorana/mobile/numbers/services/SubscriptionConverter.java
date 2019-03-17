@@ -1,7 +1,8 @@
 package eu.davidemartorana.mobile.numbers.services;
 
 import java.time.LocalDateTime;
-import java.time.ZoneOffset;
+import java.time.ZoneId;
+import java.util.Date;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -41,13 +42,20 @@ public class SubscriptionConverter {
 	
 	public static Subscription convertToSubscription(final MobileSubscription mobileSubscription) {
 		LOGGER.info("Converting Data Domain to DTO {}", mobileSubscription);
+		
+		final Date dateToConvert = mobileSubscription.getServiceStartDate();
+		
+		final LocalDateTime subscriptionDate = dateToConvert.toInstant()
+				.atZone(ZoneId.systemDefault())
+				.toLocalDateTime();
+		
 		final Subscription subscription = new Subscription()
 				.setId(mobileSubscription.getId())
 				.setMobileNumber(mobileSubscription.getNumber())
 				.setOwnerId(mobileSubscription.getCustomerIdOwner())
 				.setUserId(mobileSubscription.getCustomerIdUser())
 				.setServiceType(mobileSubscription.getServiceType().toLabelService())
-				.setSubscribtionDate(LocalDateTime.ofEpochSecond(mobileSubscription.getServiceStartDate().getTime(), 0, ZoneOffset.UTC));
+				.setSubscribtionDate(subscriptionDate);
 		
 		LOGGER.debug("Converted Data Domain to DTO {} -> {}", mobileSubscription, subscription);
 		
