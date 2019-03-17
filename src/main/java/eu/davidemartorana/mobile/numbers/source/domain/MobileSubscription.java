@@ -1,5 +1,6 @@
 package eu.davidemartorana.mobile.numbers.source.domain;
 
+import java.util.Calendar;
 import java.util.Date;
 
 import javax.persistence.Column;
@@ -12,14 +13,14 @@ import javax.persistence.Table;
 import eu.davidemartorana.mobile.numbers.domain.ServiceType;
 
 @Entity
-@Table(name="subscriber")
-public class Subscriber {
+@Table(name="mobile_subscriptions")
+public class MobileSubscription {
 	
 	@Id
-	@GeneratedValue(strategy=GenerationType.AUTO)
+	@GeneratedValue(strategy=GenerationType.IDENTITY)
 	private Long id;
 	
-	@Column(name="msisdn")
+	@Column(name="msisdn", unique=true)
 	private String number;
 	
 	@Column(name="customer_id_owner")
@@ -33,9 +34,22 @@ public class Subscriber {
 	
 	@Column(name="service_start_date")
 	@GeneratedValue(strategy=GenerationType.AUTO)
-	private Long serviceStartDate;
+	private Date serviceStartDate;
 
 	
+	public MobileSubscription() {
+		super();
+	}
+	
+	public MobileSubscription(String number, Long customerIdOwner, Long customerIdUser, ServiceType serviceType) {
+		super();
+		this.number = number;
+		this.customerIdOwner = customerIdOwner;
+		this.customerIdUser = customerIdUser;
+		this.serviceType = serviceType;
+		this.serviceStartDate = new Date();
+	}
+
 	public Long getId() {
 		return id;
 	}
@@ -76,11 +90,11 @@ public class Subscriber {
 		this.serviceType = serviceType;
 	}
 
-	public Long getServiceStartDate() {
+	public Date getServiceStartDate() {
 		return serviceStartDate;
 	}
 
-	public void setServiceStartDate(Long serviceStartDate) {
+	public void setServiceStartDate(Date serviceStartDate) {
 		this.serviceStartDate = serviceStartDate;
 	}
 	
