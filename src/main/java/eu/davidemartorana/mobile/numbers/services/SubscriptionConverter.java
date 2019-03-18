@@ -10,6 +10,7 @@ import org.slf4j.LoggerFactory;
 import eu.davidemartorana.mobile.numbers.domain.ServiceType;
 import eu.davidemartorana.mobile.numbers.rest.dto.Subscription;
 import eu.davidemartorana.mobile.numbers.source.domain.MobileSubscription;
+import io.micrometer.core.instrument.util.StringUtils;
 
 /**
  * 
@@ -33,7 +34,9 @@ public class SubscriptionConverter {
 		mobileSubscription.setCustomerIdOwner(subscription.getOwnerId());
 		mobileSubscription.setCustomerIdUser(subscription.getUserId());
 		mobileSubscription.setNumber(subscription.getMobileNumber());
-		mobileSubscription.setServiceType(ServiceType.fromLabelService(subscription.getServiceType()));
+		if(StringUtils.isNotEmpty(subscription.getServiceType())) {
+			mobileSubscription.setServiceType(ServiceType.fromLabelService(subscription.getServiceType()));
+		}
 		
 		LOGGER.debug("Converted DTO to Data Domain {} -> {}", subscription, mobileSubscription);
 		
@@ -55,7 +58,7 @@ public class SubscriptionConverter {
 				.setOwnerId(mobileSubscription.getCustomerIdOwner())
 				.setUserId(mobileSubscription.getCustomerIdUser())
 				.setServiceType(mobileSubscription.getServiceType().toLabelService())
-				.setSubscribtionDate(subscriptionDate);
+				.setSubscriptionDate(subscriptionDate);
 		
 		LOGGER.debug("Converted Data Domain to DTO {} -> {}", mobileSubscription, subscription);
 		

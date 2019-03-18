@@ -32,7 +32,7 @@ public class Subscription {
 	@Pattern(regexp = "^(Prepaid|Postpaid)$", flags=Flag.CASE_INSENSITIVE)
 	private String serviceType;
 
-	private LocalDateTime subscribtionDate;
+	private LocalDateTime subscriptionDate;
 
 	
 	
@@ -72,12 +72,12 @@ public class Subscription {
 		return this;
 	}
 
-	public LocalDateTime getSubscribtionDate() {
-		return subscribtionDate;
+	public LocalDateTime getSubscriptionDate() {
+		return subscriptionDate;
 	}
 
-	public Subscription setSubscribtionDate(LocalDateTime subscribtionDate) {
-		this.subscribtionDate = subscribtionDate;
+	public Subscription setSubscriptionDate(LocalDateTime subscriptionDate) {
+		this.subscriptionDate = subscriptionDate;
 		return this;
 	}
 

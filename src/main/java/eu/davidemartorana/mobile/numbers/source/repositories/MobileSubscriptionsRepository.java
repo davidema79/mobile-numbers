@@ -2,8 +2,7 @@ package eu.davidemartorana.mobile.numbers.source.repositories;
 
 import java.util.Optional;
 
-import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
-import org.springframework.data.repository.PagingAndSortingRepository;
+import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 import eu.davidemartorana.mobile.numbers.source.domain.MobileSubscription;
@@ -15,7 +14,7 @@ import eu.davidemartorana.mobile.numbers.source.domain.MobileSubscription;
  *
  */
 @Repository
-public interface MobileSubscriptionsRepository extends PagingAndSortingRepository<MobileSubscription, Long>,JpaSpecificationExecutor<MobileSubscription> {
+public interface MobileSubscriptionsRepository extends JpaRepository<MobileSubscription, Long> {
 	
 	
 	Optional<MobileSubscription> findByNumber(String number);

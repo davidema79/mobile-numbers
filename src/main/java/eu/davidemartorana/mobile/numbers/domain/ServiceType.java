@@ -3,6 +3,8 @@ package eu.davidemartorana.mobile.numbers.domain;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.apache.commons.lang3.StringUtils;
+
 /**
  * 
  * @author davidemartorana
@@ -28,6 +30,9 @@ public enum ServiceType {
 	}
 	
 	public static ServiceType fromLabelService(final String label) {
+		if(StringUtils.isEmpty(label)) {
+			throw new IllegalArgumentException("Label cannot be empty.");
+		}
 		final ServiceType type = LOOKUP_MAP.get(label.toLowerCase());
 		if(type == null) {
 			throw new IllegalArgumentException("Label not valid: " + label);
