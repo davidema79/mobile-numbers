@@ -1,6 +1,9 @@
 package eu.davidemartorana.mobile.numbers.source.repositories;
 
-import org.springframework.data.repository.PagingAndSortingRepository;
+import java.util.Optional;
+
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
 
 import eu.davidemartorana.mobile.numbers.source.domain.MobileSubscription;
 
@@ -10,6 +13,10 @@ import eu.davidemartorana.mobile.numbers.source.domain.MobileSubscription;
  * @author davidemartorana
  *
  */
-public interface MobileSubscriptionsRepository extends PagingAndSortingRepository<MobileSubscription, Long> {
-
+@Repository
+public interface MobileSubscriptionsRepository extends JpaRepository<MobileSubscription, Long> {
+	
+	
+	Optional<MobileSubscription> findByNumber(String number);
+	
 }

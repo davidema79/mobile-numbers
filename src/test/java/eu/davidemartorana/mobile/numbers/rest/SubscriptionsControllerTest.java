@@ -1,151 +1,249 @@
 package eu.davidemartorana.mobile.numbers.rest;
 
-import static org.hamcrest.CoreMatchers.hasItems;
-import static org.hamcrest.CoreMatchers.notNullValue;
 
+import static org.hamcrest.collection.IsCollectionWithSize.hasSize;
+
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.hamcrest.collection.IsCollectionWithSize;
-import org.hamcrest.collection.IsEmptyCollection;
-import org.hamcrest.core.IsCollectionContaining;
-import org.hamcrest.core.IsEqual;
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
+import org.assertj.core.util.Lists;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.BDDMockito;
+import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
-import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
-import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase.Replace;
-import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
-import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Import;
-import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
-import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
+import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.dao.EmptyResultDataAccessException;
+import org.springframework.http.MediaType;
 import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
+import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
 
-import eu.davidemartorana.mobile.numbers.config.DataSourceConfig;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import eu.davidemartorana.mobile.numbers.domain.ServiceType;
 import eu.davidemartorana.mobile.numbers.rest.dto.Subscription;
-import eu.davidemartorana.mobile.numbers.services.SubscriptionConverter;
 import eu.davidemartorana.mobile.numbers.services.SubscriptionsService;
-import eu.davidemartorana.mobile.numbers.source.domain.MobileSubscription;
-import eu.davidemartorana.mobile.numbers.source.repositories.MobileSubscriptionsRepository;
 
-/**
- * Tests
- * 
- * @author davidemartorana
- *
- */
-@RunWith(SpringJUnit4ClassRunner.class)
-@DataJpaTest
-@ContextConfiguration(classes = { SubscriptionsControllerTest.Config.class })
-@AutoConfigureTestDatabase(replace=Replace.NONE)
+@RunWith(SpringRunner.class)
+@WebMvcTest(SubscriptionsController.class)
 public class SubscriptionsControllerTest {
 
-	@Import(DataSourceConfig.class)
-	public static class Config {
-
-		@Bean
-		public SubscriptionsService getSubscriptionService() {
-			return new SubscriptionsService();
-		}
-
-		@Bean
-		public SubscriptionsController getSubscriptionsController() {
-			return new SubscriptionsController();
-		}
-
-	}
-
 	@Autowired
-	private SubscriptionsController controller;
+	private MockMvc mvc;
 
-	@Autowired
-	private TestEntityManager testEntityManager;
+	@MockBean
+	private SubscriptionsService subscriptionsService;
+	
+	private static final ObjectMapper MAPPER = new ObjectMapper();
 
-	private final List<MobileSubscription> mobileSubscriptinList = new ArrayList<>();
-
-	@Before
-	public void populateDataBase() {
-
-		mobileSubscriptinList.add(new MobileSubscription("35677986001", 2l, 2l, ServiceType.MOBILE_POSTPAID));
-		mobileSubscriptinList.add(new MobileSubscription("35677986002", 2l, 3l, ServiceType.MOBILE_PREPAID));
-		mobileSubscriptinList.add(new MobileSubscription("35677986003", 4l, 5l, ServiceType.MOBILE_POSTPAID));
-		mobileSubscriptinList.add(new MobileSubscription("35677986004", 10l, 10l, ServiceType.MOBILE_PREPAID));
-
-		this.testEntityManager.persist(mobileSubscriptinList.get(0));
-		this.testEntityManager.persist(mobileSubscriptinList.get(1));
-		this.testEntityManager.persist(mobileSubscriptinList.get(2));
-		this.testEntityManager.persist(mobileSubscriptinList.get(3));
-		//this.testEntityManager.flush();
+	
+	private Subscription createSubscription(final Long id, final String mobileNumber, final long ownerId, final long userId, final ServiceType serviceType) {
+		return new Subscription().setId(id)
+					.setMobileNumber(mobileNumber)
+					.setOwnerId(ownerId)
+					.setUserId(userId)
+					.setServiceType(serviceType.toLabelService())
+					.setSubscriptionDate(LocalDateTime.now());
 	}
 	
-	@After
-	public void afterTest() {
-		mobileSubscriptinList.clear();
+	private Subscription createSubscriptionPost(final String mobileNumber, final long ownerId, final long userId, final ServiceType serviceType) {
+		return new Subscription()
+					.setMobileNumber(mobileNumber)
+					.setOwnerId(ownerId)
+					.setUserId(userId)
+					.setServiceType(serviceType.toLabelService());
 	}
-
+	
+	
 	@Test
-	public void getSubscriberTest() {
-		final List<Subscription> allList = this.controller.getSubscribers(null, null);
+	public void testGetSubscriptionsList_statusOK() throws Exception {
+		final Long id = 10L;
+		final String mobileNumber = "3569987646382";
+		final Long ownerId = 345L;
+		final Long userId = 1245L;
+		
+		final Subscription mockedSubscription = createSubscription(id, mobileNumber, ownerId, userId, ServiceType.MOBILE_PREPAID);
 
-		Assert.assertThat(allList, notNullValue());
-		Assert.assertEquals(allList, hasItems(mobileSubscriptinList.toArray()));
+		final Long id2 = 20L;
+		final String mobileNumber2 = "3569987646000";
+		final Long ownerId2 = 987L;
+		final Long userId2 = 4567L;
+		
+		final Subscription mockedSubscription2 = createSubscription(id2, mobileNumber2, ownerId2, userId2, ServiceType.MOBILE_POSTPAID);
 
-		final List<Subscription> emptyList = this.controller.getSubscribers(1l, 1l);
-		Assert.assertThat(emptyList, notNullValue());
-		Assert.assertThat(emptyList, IsEmptyCollection.empty());
+		final List<Subscription> list = Lists.list(mockedSubscription, mockedSubscription2);
+
+		BDDMockito.given(this.subscriptionsService.getSubscriptions(Mockito.any()))
+			.willReturn(list);
 		
-		final List<Subscription> twoItemsInList = this.controller.getSubscribers(2l, null);
-		Assert.assertThat(twoItemsInList, notNullValue());
-		Assert.assertThat(twoItemsInList, IsCollectionWithSize.hasSize(2));
-		
-		final Subscription first = SubscriptionConverter.convertToSubscription(mobileSubscriptinList.get(0));
-		final Subscription second = SubscriptionConverter.convertToSubscription(mobileSubscriptinList.get(1));
-		
-		Assert.assertThat(twoItemsInList, IsCollectionContaining.hasItems(first, second));
+		this.mvc.perform(MockMvcRequestBuilders.get("/mobile-numbers").accept(MediaType.APPLICATION_JSON))
+				.andExpect(MockMvcResultMatchers.status().isOk())
+				.andExpect(MockMvcResultMatchers.content().contentType(MediaType.APPLICATION_JSON_UTF8))
+				.andExpect(MockMvcResultMatchers.jsonPath("$", hasSize(2)))
+				.andExpect(MockMvcResultMatchers.jsonPath("$[0].id").value(id))
+				.andExpect(MockMvcResultMatchers.jsonPath("$[1].id").value(id2));
 	}
 
+	
 	@Test
-	public void getSubscriberByIdTest() {
-		final Subscription subscription = this.controller.getSubscriberById(1l);
-
-		Assert.assertNotNull(subscription);
-		final Subscription first = SubscriptionConverter.convertToSubscription(mobileSubscriptinList.get(0));
+	public void testGetSubscriptionsList_statusBadRequest() throws Exception {
 		
-		Assert.assertThat(subscription, IsEqual.equalTo(first));
+		this.mvc.perform(MockMvcRequestBuilders.get("/mobile-numbers?").param("mobileNumber", "234fre679"))
+				.andExpect(MockMvcResultMatchers.status().isBadRequest());
 		
-		final Subscription subscriptionNotExist = this.controller.getSubscriberById(10l);
 
-		Assert.assertNull(subscriptionNotExist);
+		this.mvc.perform(MockMvcRequestBuilders.get("/mobile-numbers?").param("serviceType", "MobilePlanNoValid"))
+				.andExpect(MockMvcResultMatchers.status().isBadRequest());
+	}
+	
+	@Test
+	public void testGetSubscriptionsList_statusIsOK_Empty() throws Exception {
 		
-	}
+		final List<Subscription> list = new ArrayList<>();
 
+		BDDMockito.given(this.subscriptionsService.getSubscriptions(Mockito.any()))
+			.willReturn(list);
+		
+		this.mvc.perform(MockMvcRequestBuilders.get("/mobile-numbers").accept(MediaType.APPLICATION_JSON))
+				.andExpect(MockMvcResultMatchers.status().isOk())
+				.andExpect(MockMvcResultMatchers.content().contentType(MediaType.APPLICATION_JSON_UTF8))
+				.andExpect(MockMvcResultMatchers.jsonPath("$", hasSize(0)));
+	}
+	
+	
 	@Test
-	public void addSubscriberTest() {
-		final Subscription subscription = this.controller.addSubscriber(new Subscription().setMobileNumber("356789654")
-				.setOwnerId(20l).setUserId(21l).setServiceType(ServiceType.MOBILE_POSTPAID.toLabelService()));
+	public void testGetSubscriptionById_statusOK() throws Exception {
+		final Long id = 10L;
+		final String mobileNumber = "3569987646382";
+		final Long ownerId = 345L;
+		final Long userId = 1245L;
+		
+		final Subscription mockedSubscription = createSubscription(id, mobileNumber, ownerId, userId, ServiceType.MOBILE_PREPAID);
 
-		Assert.assertNotNull(subscription);
+		final LocalDateTime subscriptionDate = mockedSubscription.getSubscriptionDate();
+		
+		BDDMockito.given(this.subscriptionsService.getSubscription(id))
+				.willReturn(mockedSubscription);
+		
+		this.mvc.perform(MockMvcRequestBuilders.get("/mobile-numbers/" + id).accept(MediaType.APPLICATION_JSON))
+				.andExpect(MockMvcResultMatchers.status().isOk())
+				.andExpect(MockMvcResultMatchers.content().contentType(MediaType.APPLICATION_JSON_UTF8))
+				.andExpect(MockMvcResultMatchers.jsonPath("$.id").value(id.intValue()))
+				.andExpect(MockMvcResultMatchers.jsonPath("$.ownerId").value(ownerId.intValue()))
+				.andExpect(MockMvcResultMatchers.jsonPath("$.userId").value(userId.intValue()))
+				.andExpect(MockMvcResultMatchers.jsonPath("$.mobileNumber").value(mobileNumber))
+				.andExpect(MockMvcResultMatchers.jsonPath("$.serviceType").value(ServiceType.MOBILE_PREPAID.toLabelService()))
+				.andExpect(MockMvcResultMatchers.jsonPath("$.subscriptionDate").value(subscriptionDate.toString()));
+				
 	}
-
+	
+	
 	@Test
-	public void deleteSubscriberTest() {
-		this.controller.deleteSubscriber(4l);
-		this.controller.deleteSubscriber(5l); //It does not exist, but no exception is thrown.
+	public void testGetSubscriptionById_statusNotFound() throws Exception {
+		final Long id = 10L;
+		final String messageError = String.format("Subscription with id '%s' not found", id);
+				
+		BDDMockito.given(this.subscriptionsService.getSubscription(id))
+			.willThrow(new EmptyResultDataAccessException(messageError, 1));
+		
+		this.mvc.perform(MockMvcRequestBuilders.get("/mobile-numbers/" + id).accept(MediaType.APPLICATION_JSON))
+				.andExpect(MockMvcResultMatchers.status().isNotFound())
+				.andExpect(MockMvcResultMatchers.content().contentType(MediaType.APPLICATION_JSON_UTF8))
+				.andExpect(MockMvcResultMatchers.jsonPath("$.message").value(messageError))
+				.andExpect(MockMvcResultMatchers.jsonPath("$.status").value(404))
+				.andExpect(MockMvcResultMatchers.jsonPath("$.error").value("Not Found."))
+				.andExpect(MockMvcResultMatchers.jsonPath("$.path").value("/mobile-numbers/" + id));
 	}
-
+	
 	@Test
-	public void modifySubscriberTest() {
-		final Subscription subscription = this.controller.modifySubscriber(4l, new Subscription().setOwnerId(11l)
-				.setUserId(12l).setServiceType(ServiceType.MOBILE_POSTPAID.toLabelService()));
-
-		Assert.assertNotNull(subscription);
+	public void testGetSubscriptionById_statusInternalError() throws Exception {
+		final Long id = 10L;
+		final String messageError = String.format("GenericException", id);
+				
+		BDDMockito.given(this.subscriptionsService.getSubscription(id))
+			.willThrow(new RuntimeException(messageError));
+		
+		this.mvc.perform(MockMvcRequestBuilders.get("/mobile-numbers/" + id).accept(MediaType.APPLICATION_JSON))
+				.andExpect(MockMvcResultMatchers.status().isInternalServerError())
+				.andExpect(MockMvcResultMatchers.content().contentType(MediaType.APPLICATION_JSON_UTF8))
+				.andExpect(MockMvcResultMatchers.jsonPath("$.message").value(messageError))
+				.andExpect(MockMvcResultMatchers.jsonPath("$.status").value(500))
+				.andExpect(MockMvcResultMatchers.jsonPath("$.error").value("Internal Server Error."))
+				.andExpect(MockMvcResultMatchers.jsonPath("$.path").value("/mobile-numbers/" + id));
+	}	
+	
+	
+	@Test
+	public void testPostSubscription_isCreated() throws Exception {
+		final Long id = 10L;
+		final String mobileNumber = "3569987646382";
+		final Long ownerId = 345L;
+		final Long userId = 1245L;
+		
+		final Subscription mockedSubscription = createSubscription(id, mobileNumber, ownerId, userId, ServiceType.MOBILE_PREPAID);
+		final Subscription postedSubscription = createSubscriptionPost(mobileNumber, ownerId, userId, ServiceType.MOBILE_PREPAID);
+		
+		final LocalDateTime subscriptionDate = mockedSubscription.getSubscriptionDate();
+				
+		BDDMockito.given(this.subscriptionsService.addNewSubscriptor(Mockito.any()))
+			.willReturn(mockedSubscription);
+		
+		final String jsonSubscription = MAPPER.writeValueAsString(postedSubscription);
+		
+		this.mvc.perform(MockMvcRequestBuilders.post("/mobile-numbers")
+				.contentType(MediaType.APPLICATION_JSON)
+				.accept(MediaType.APPLICATION_JSON)
+				.content(jsonSubscription))
+			.andExpect(MockMvcResultMatchers.status().isCreated())
+			.andExpect(MockMvcResultMatchers.content().contentType(MediaType.APPLICATION_JSON_UTF8))
+			.andExpect(MockMvcResultMatchers.jsonPath("$.id").value(id.intValue()))
+			.andExpect(MockMvcResultMatchers.jsonPath("$.ownerId").value(ownerId.intValue()))
+			.andExpect(MockMvcResultMatchers.jsonPath("$.userId").value(userId.intValue()))
+			.andExpect(MockMvcResultMatchers.jsonPath("$.mobileNumber").value(mobileNumber))
+			.andExpect(MockMvcResultMatchers.jsonPath("$.serviceType").value(ServiceType.MOBILE_PREPAID.toLabelService()))
+			.andExpect(MockMvcResultMatchers.jsonPath("$.subscriptionDate").value(subscriptionDate.toString()));
+	}	
+	
+	
+	@Test
+	public void testPostSubscription_isBadRequest() throws Exception {
+		final String mobileNumber = "3569987646382";
+		final Long ownerId = 345L;
+		final Long userId = 1245L;
+		
+		final Subscription postedSubscription = createSubscriptionPost(mobileNumber, ownerId, userId, ServiceType.MOBILE_PREPAID);
+		
+		final String messageError = "Mobile Number already Exists: " + mobileNumber;
+				
+		BDDMockito.given(this.subscriptionsService.addNewSubscriptor(Mockito.any()))
+			.willThrow(new IllegalArgumentException(messageError));
+		
+		final String jsonSubscription = MAPPER.writeValueAsString(postedSubscription);
+		
+		this.mvc.perform(MockMvcRequestBuilders.post("/mobile-numbers/")
+				.contentType(MediaType.APPLICATION_JSON)
+				.accept(MediaType.APPLICATION_JSON)
+				.content(jsonSubscription))
+				.andExpect(MockMvcResultMatchers.status().isBadRequest())
+				.andExpect(MockMvcResultMatchers.content().contentType(MediaType.APPLICATION_JSON_UTF8))
+				.andExpect(MockMvcResultMatchers.jsonPath("$.message").value(messageError))
+				.andExpect(MockMvcResultMatchers.jsonPath("$.status").value(400))
+				.andExpect(MockMvcResultMatchers.jsonPath("$.error").value("Bad Request."))
+				.andExpect(MockMvcResultMatchers.jsonPath("$.path").value("/mobile-numbers/"));
 	}
+	
+	@Test
+	public void testDelete_isOK() throws Exception {
+		
+		this.mvc.perform(MockMvcRequestBuilders.delete("/mobile-numbers/10")
+				.contentType(MediaType.APPLICATION_JSON)
+				.accept(MediaType.APPLICATION_JSON))
+				.andExpect(MockMvcResultMatchers.status().isNoContent());		
+				
+	}
+	
 }

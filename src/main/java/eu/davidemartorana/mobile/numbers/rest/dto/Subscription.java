@@ -2,14 +2,13 @@ package eu.davidemartorana.mobile.numbers.rest.dto;
 
 import java.time.LocalDateTime;
 
-import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
-import javax.validation.constraints.Null;
 import javax.validation.constraints.Pattern;
 import javax.validation.constraints.Pattern.Flag;
 
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
+import org.apache.commons.lang3.builder.ToStringBuilder;
 
 /**
  * 
@@ -18,7 +17,6 @@ import org.apache.commons.lang3.builder.HashCodeBuilder;
  */
 public class Subscription {
 
-	@Null
 	private Long id;
 
 	@NotNull
@@ -32,7 +30,7 @@ public class Subscription {
 	@Pattern(regexp = "^(Prepaid|Postpaid)$", flags=Flag.CASE_INSENSITIVE)
 	private String serviceType;
 
-	private LocalDateTime subscribtionDate;
+	private LocalDateTime subscriptionDate;
 
 	
 	
@@ -72,12 +70,12 @@ public class Subscription {
 		return this;
 	}
 
-	public LocalDateTime getSubscribtionDate() {
-		return subscribtionDate;
+	public LocalDateTime getSubscriptionDate() {
+		return subscriptionDate;
 	}
 
-	public Subscription setSubscribtionDate(LocalDateTime subscribtionDate) {
-		this.subscribtionDate = subscribtionDate;
+	public Subscription setSubscriptionDate(LocalDateTime subscriptionDate) {
+		this.subscriptionDate = subscriptionDate;
 		return this;
 	}
 
@@ -98,6 +96,11 @@ public class Subscription {
 	@Override
 	public boolean equals(Object other) {
 		return EqualsBuilder.reflectionEquals(this, other, true);
+	}
+	
+	@Override
+	public String toString() {
+		return ToStringBuilder.reflectionToString(this);
 	}
 
 }

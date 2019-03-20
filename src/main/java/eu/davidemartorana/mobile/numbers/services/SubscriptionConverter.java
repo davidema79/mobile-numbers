@@ -1,7 +1,8 @@
 package eu.davidemartorana.mobile.numbers.services;
 
 import java.time.LocalDateTime;
-import java.time.ZoneOffset;
+import java.time.ZoneId;
+import java.util.Date;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -9,6 +10,7 @@ import org.slf4j.LoggerFactory;
 import eu.davidemartorana.mobile.numbers.domain.ServiceType;
 import eu.davidemartorana.mobile.numbers.rest.dto.Subscription;
 import eu.davidemartorana.mobile.numbers.source.domain.MobileSubscription;
+import io.micrometer.core.instrument.util.StringUtils;
 
 /**
  * 
@@ -32,7 +34,9 @@ public class SubscriptionConverter {
 		mobileSubscription.setCustomerIdOwner(subscription.getOwnerId());
 		mobileSubscription.setCustomerIdUser(subscription.getUserId());
 		mobileSubscription.setNumber(subscription.getMobileNumber());
-		mobileSubscription.setServiceType(ServiceType.fromLabelService(subscription.getServiceType()));
+		if(StringUtils.isNotEmpty(subscription.getServiceType())) {
+			mobileSubscription.setServiceType(ServiceType.fromLabelService(subscription.getServiceType()));
+		}
 		
 		LOGGER.debug("Converted DTO to Data Domain {} -> {}", subscription, mobileSubscription);
 		
@@ -41,13 +45,20 @@ public class SubscriptionConverter {
 	
 	public static Subscription convertToSubscription(final MobileSubscription mobileSubscription) {
 		LOGGER.info("Converting Data Domain to DTO {}", mobileSubscription);
+		
+		final Date dateToConvert = mobileSubscription.getServiceStartDate();
+		
+		final LocalDateTime subscriptionDate = dateToConvert.toInstant()
+				.atZone(ZoneId.systemDefault())
+				.toLocalDateTime();
+		
 		final Subscription subscription = new Subscription()
 				.setId(mobileSubscription.getId())
 				.setMobileNumber(mobileSubscription.getNumber())
 				.setOwnerId(mobileSubscription.getCustomerIdOwner())
 				.setUserId(mobileSubscription.getCustomerIdUser())
 				.setServiceType(mobileSubscription.getServiceType().toLabelService())
-				.setSubscribtionDate(LocalDateTime.ofEpochSecond(mobileSubscription.getServiceStartDate().getTime(), 0, ZoneOffset.UTC));
+				.setSubscriptionDate(subscriptionDate);
 		
 		LOGGER.debug("Converted Data Domain to DTO {} -> {}", mobileSubscription, subscription);
 		

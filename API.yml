@@ -12,6 +12,30 @@ paths:
     get:
       summary: Returns a list of subscribed mobile numbers.
       description: Returns a list of mobile number subscriptions contained in the database.
+      parameters:
+      - in: query
+        name: userId
+        required: false
+        schema:
+          type: number
+      - in: query
+        name: ownerId
+        required: false
+        schema:
+          type: number
+      - in: query
+        name: mobileNumber
+        required: false
+        schema:
+          type: string
+          pattern: "^[1-9][0-9]{0,14}$"
+      - in: query
+        name: serviceType
+        required: false
+        schema:
+          type: string
+          enum: ["Prepaid", "Postpaied"]
+          
       responses:
         200:
           description: A JSON array of mobile number subscriptions
@@ -113,6 +137,12 @@ paths:
     patch:
       summary: Patch mobile number subscription details
       description: "Patch mobile number subscription details by its ID"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MobileNumberModify'
+      
       responses:
         200:
           description: Subscriber Details
@@ -147,7 +177,7 @@ components:
           format: int64
         mobileNumber:
           type: string
-          pattern: '^[1-9]\d{1,14}$'
+          pattern: '^[1-9][0-9]{1,14}$'
           example: "35699123456"
         userId:
           type: integer
@@ -161,6 +191,19 @@ components:
         subscribtionDate:
           type: string
           format: date-time
+          
+    MobileNumberModify:
+      type: object
+      properties:
+        userId:
+          type: integer
+          format: int64
+        ownerId:
+          type: integer
+          format: int64
+        serviceType:
+          type: string
+          enum: ["Prepaid", "Postpaied"]
           
     ErrorMessage:
       type: object
