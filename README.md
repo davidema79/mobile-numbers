@@ -40,7 +40,7 @@ After building the package it is possible create the docker image from the `mvn`
   $ mvn fabric8:push
 
 ```
-
+Please refer to [Fabric8 Maven Plugin](https://github.com/fabric8io/fabric8-maven-plugin/tree/v4.0.0) for further info about the docker maven plugin features.
 
 ## How to Run
 After packaging the application it may be run as a normal SpringBoot application or docker container.
