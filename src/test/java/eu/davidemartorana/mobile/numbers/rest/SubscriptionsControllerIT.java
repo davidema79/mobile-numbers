@@ -22,7 +22,6 @@ import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabas
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase.Replace;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager;
-import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
 import org.springframework.dao.EmptyResultDataAccessException;
@@ -45,7 +44,7 @@ import eu.davidemartorana.mobile.numbers.source.domain.MobileSubscription;
 @RunWith(SpringRunner.class)
 @DataJpaTest
 @ContextConfiguration(classes = { SubscriptionsControllerIT.Config.class })
-@AutoConfigureTestDatabase(replace=Replace.NONE)
+@AutoConfigureTestDatabase(replace=Replace.ANY)
 public class SubscriptionsControllerIT {
 
 	@Import(DataSourceConfig.class)

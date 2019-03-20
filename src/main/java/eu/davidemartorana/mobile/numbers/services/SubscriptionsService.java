@@ -35,19 +35,26 @@ public class SubscriptionsService {
 	
 	@Transactional
 	public Subscription addNewSubscriptor(final Subscription subscription) {
+		LOGGER.info("Creating a new subscription for number '{}'", subscription.getMobileNumber());
 		
 		final MobileSubscription mobileSubscription = SubscriptionConverter.convertToMobileSubscription(subscription);
 		
 		mobileSubscription.setServiceStartDate(new Date());
 		
+		LOGGER.debug("Checking if the number '{}' already exists", subscription.getMobileNumber());
+		
 		final Optional<MobileSubscription> optionalMobile = repoMobileSubscriptionsRepository.findByNumber(mobileSubscription.getNumber());
 			
 		if(optionalMobile.isPresent()) {
+			LOGGER.info("The number '{}' already exists", subscription.getMobileNumber());
 			throw new IllegalArgumentException("Mobile Number already Exists: " + mobileSubscription.getNumber());
 		}
 		
+		LOGGER.debug("The number '{}' does not exists", subscription.getMobileNumber());
 		
 		final MobileSubscription mobileSubscriptionResult = repoMobileSubscriptionsRepository.save(mobileSubscription);
+		
+		LOGGER.debug("New subscription stored in the databas: [{}]", mobileSubscriptionResult);
 		
 		return SubscriptionConverter.convertToSubscription(mobileSubscriptionResult);
 	}
@@ -81,7 +88,7 @@ public class SubscriptionsService {
 		try {
 			repoMobileSubscriptionsRepository.deleteById(id);
 		} catch (final EmptyResultDataAccessException e) {
-			LOGGER.debug("Attempting to delete a record that is not in the database. No error needs to be returned.");
+			LOGGER.info("Attempting to delete a record that is not in the database. No error needs to be returned.");
 		}
 	}
 	

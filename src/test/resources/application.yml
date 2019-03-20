@@ -1,0 +1,14 @@
+spring:  
+  jpa:
+    generate-ddl: true
+    show-sql: true
+    hibernate:
+      use-new-id-generator-mappings: true
+      ddl-auto: create-drop
+      
+    
+  datasource:
+    username: sa
+    password: sa
+    jdbcUrl: jdbc:h2:mem:vdf-mobile-numbers;DB_CLOSE_DELAY=-1
+    driver-class-name: org.h2.Driver
